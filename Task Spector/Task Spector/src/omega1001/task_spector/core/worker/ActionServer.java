@@ -10,6 +10,7 @@ import omega1001.task_spector.basis.EventType;
 import omega1001.task_spector.basis.TaskAddEvent;
 import omega1001.task_spector.basis.TaskChangeEvent;
 import omega1001.task_spector.basis.UserEvent;
+import omega1001.task_spector.basis.UserEventAddEvent;
 import omega1001.task_spector.core.EventQuey;
 import omega1001.task_spector.moddel.Task;
 
@@ -98,9 +99,13 @@ public class ActionServer implements Runnable {
 							recorder.printTaskChangeToLog(activeTask,
 									EventType.TASK_STAT);
 						}
+					}else if (ev.getType().equals(EventType.USER_EVENT_DEL)){
+						iniServer.delEvent(ev.getEventName());
 					}
 				} else if (e.getType().equals(EventType.COMMENT)) {
 						recorder.printComment(((CommentEvent) e).getComment());
+				}else if (e instanceof UserEventAddEvent){
+					iniServer.addEvent(((UserEventAddEvent)e).getEvent());
 				}
 				update = true;
 			}

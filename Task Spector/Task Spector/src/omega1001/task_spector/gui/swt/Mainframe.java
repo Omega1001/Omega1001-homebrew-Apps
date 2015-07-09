@@ -7,11 +7,13 @@ import java.util.List;
 import java.util.concurrent.ExecutionException;
 
 import omega1001.task_spector.basis.CommentEvent;
+import omega1001.task_spector.basis.Event;
 import omega1001.task_spector.basis.EventType;
 import omega1001.task_spector.basis.IniFile;
 import omega1001.task_spector.basis.TaskAddEvent;
 import omega1001.task_spector.basis.TaskChangeEvent;
 import omega1001.task_spector.basis.UserEvent;
+import omega1001.task_spector.basis.UserEventAddEvent;
 import omega1001.task_spector.core.CentralCore;
 import omega1001.task_spector.core.EventQuey;
 import omega1001.task_spector.moddel.Task;
@@ -25,47 +27,52 @@ import org.eclipse.swt.widgets.TableColumn;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.events.MouseAdapter;
 import org.eclipse.swt.events.MouseEvent;
-import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.events.ShellAdapter;
 import org.eclipse.swt.events.ShellEvent;
+import org.eclipse.swt.widgets.Menu;
+import org.eclipse.swt.widgets.MenuItem;
+import org.eclipse.swt.events.SelectionAdapter;
+import org.eclipse.swt.events.SelectionEvent;
 
 public class Mainframe {
 
 	protected Shell shlTaskSpector;
 	private Table table;
 	private CentralCore core;
-	private static final String DEFAULT_LOG_PATH = "taskLog"+new SimpleDateFormat("MMMMM.yyyy").format(new Date())+".txt";
+	private static final String DEFAULT_LOG_PATH = "taskLog"
+			+ new SimpleDateFormat("MMMMM.yyyy").format(new Date()) + ".txt";
 	private File logPath;
-	
+
 	private IniFile iniDatas;
 
 	/**
 	 * Launch the application.
+	 * 
 	 * @param args
 	 */
 	public static void main(String[] args) {
 		Mainframe window = null;
-		if (args.length != 0 && args.length>=2){
-			for (int i=0;i<args.length;i++){
+		if (args.length != 0 && args.length >= 2) {
+			for (int i = 0; i < args.length; i++) {
 				String s;
-				if ((s = args[i]).contains("--path:\"")){
+				if ((s = args[i]).contains("--path:\"")) {
 					s.replace("--path:", "").replace("\"", "");
 					File f = new File(s);
-					if(f.getParentFile().exists() && !f.isDirectory()){
+					if (f.getParentFile().exists() && !f.isDirectory()) {
 						window = new Mainframe(f);
-					}else{
-						window = new Mainframe(new File (DEFAULT_LOG_PATH));
+					} else {
+						window = new Mainframe(new File(DEFAULT_LOG_PATH));
 					}
 				}
-				if (window == null){
-					window = new Mainframe(new File (DEFAULT_LOG_PATH));
+				if (window == null) {
+					window = new Mainframe(new File(DEFAULT_LOG_PATH));
 				}
 			}
-		}else{
-			window = new Mainframe(new File (DEFAULT_LOG_PATH));
+		} else {
+			window = new Mainframe(new File(DEFAULT_LOG_PATH));
 		}
 		try {
-			
+
 			window.open();
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -75,7 +82,6 @@ public class Mainframe {
 	public Mainframe(File f) {
 		logPath = f;
 	}
-
 
 	/**
 	 * Open the window.
@@ -112,133 +118,171 @@ public class Mainframe {
 		} catch (InterruptedException | ExecutionException e) {
 			e.printStackTrace();
 		}
-		shlTaskSpector.setSize(338, 291);
+		shlTaskSpector.setSize(338, 316);
 		shlTaskSpector.setText("Task Spector");
-		
+
 		table = new Table(shlTaskSpector, SWT.BORDER | SWT.FULL_SELECTION);
-		table.setBounds(10, 10, 221, 235);
+		table.setBounds(10, 10, 302, 235);
 		table.setHeaderVisible(true);
 		table.setLinesVisible(true);
-		
+
 		TableColumn tblclmnNewColumn = new TableColumn(table, SWT.NONE);
-		tblclmnNewColumn.setWidth(145);
+		tblclmnNewColumn.setWidth(221);
 		tblclmnNewColumn.setText("Task");
-		
+
 		TableColumn tblclmnNewColumn_1 = new TableColumn(table, SWT.NONE);
 		tblclmnNewColumn_1.setWidth(72);
 		tblclmnNewColumn_1.setText("Active");
-		
-		Button btnNewTask = new Button(shlTaskSpector, SWT.NONE);
-		btnNewTask.addMouseListener(new MouseAdapter() {
+
+		Menu menu = new Menu(shlTaskSpector, SWT.BAR);
+		shlTaskSpector.setMenuBar(menu);
+
+		MenuItem mntmTask = new MenuItem(menu, SWT.CASCADE);
+		mntmTask.setText("Task");
+
+		Menu menu_1 = new Menu(mntmTask);
+		mntmTask.setMenu(menu_1);
+
+		MenuItem mntmNewTask = new MenuItem(menu_1, SWT.NONE);
+		mntmNewTask.addSelectionListener(new SelectionAdapter() {
 			@Override
-			public void mouseUp(MouseEvent e) {
-				NewTaskDialog dialog = new NewTaskDialog(shlTaskSpector, SWT.APPLICATION_MODAL);
-				Task t = dialog.open();
+			public void widgetSelected(SelectionEvent e) {
+				AddSimpleDialog dialog = new AddSimpleDialog(shlTaskSpector,
+						SWT.APPLICATION_MODAL, "New Task", "Task Name");
+				Task t = new Task(dialog.open());
 				if (t != null)
 					EventQuey.addEvent(new TaskAddEvent(t));
 			}
 		});
-		btnNewTask.setBounds(237, 10, 75, 25);
-		btnNewTask.setText("New Task");
-		
-		Button btnNewButton = new Button(shlTaskSpector, SWT.NONE);
-		btnNewButton.addMouseListener(new MouseAdapter() {
+		mntmNewTask.setText("New Task");
+
+		MenuItem mntmStartTask = new MenuItem(menu_1, SWT.NONE);
+		mntmStartTask.addSelectionListener(new SelectionAdapter() {
 			@Override
-			public void mouseUp(MouseEvent e) {
-				if (table.getSelectionCount() == 1){
+			public void widgetSelected(SelectionEvent e) {
+				if (table.getSelectionCount() == 1) {
 					TableItem item = table.getSelection()[0];
-					EventQuey.addEvent(new TaskChangeEvent(EventType.TASK_STAT, item.getText(0)));
+					EventQuey.addEvent(new TaskChangeEvent(EventType.TASK_STAT,
+							item.getText(0)));
 				}
 			}
 		});
-		btnNewButton.setBounds(237, 41, 75, 25);
-		btnNewButton.setText("Start Task");
-		
-		Button btnNewButton_1 = new Button(shlTaskSpector, SWT.NONE);
-		btnNewButton_1.setBounds(237, 72, 75, 25);
-		btnNewButton_1.setText("End Task");
-		
-		Button btnDeleteTask = new Button(shlTaskSpector, SWT.NONE);
-		btnDeleteTask.addMouseListener(new MouseAdapter() {
+		mntmStartTask.setText("Start Task");
+
+		MenuItem mntmEditTask = new MenuItem(menu_1, SWT.NONE);
+		mntmEditTask.setText("Edit Task");
+
+		MenuItem mntmEndTask = new MenuItem(menu_1, SWT.NONE);
+		mntmEndTask.addSelectionListener(new SelectionAdapter() {
 			@Override
-			public void mouseUp(MouseEvent e) {
-				TableItem item = table.getSelection()[0];
-				EventQuey.addEvent(new TaskChangeEvent(EventType.TASK_DELETE, item.getText(0)));
+			public void widgetSelected(SelectionEvent e) {
+				if (table.getSelectionCount() == 1) {
+					TableItem item = table.getSelection()[0];
+					EventQuey.addEvent(new TaskChangeEvent(EventType.TASK_STAT,
+							item.getText(0)));
+				}
 			}
 		});
-		btnDeleteTask.setBounds(237, 103, 75, 25);
-		btnDeleteTask.setText("Delete Task");
-		
-		Button btnNewButton_2 = new Button(shlTaskSpector, SWT.NONE);
-		btnNewButton_2.addMouseListener(new MouseAdapter() {
+		mntmEndTask.setText("End Task");
+
+		MenuItem mntmDeleteTask = new MenuItem(menu_1, SWT.NONE);
+		mntmDeleteTask.addSelectionListener(new SelectionAdapter() {
 			@Override
-			public void mouseUp(MouseEvent e) {
-				SelectEvent sev = new SelectEvent(shlTaskSpector, SWT.APPLICATION_MODAL, iniDatas.getEvents());
+			public void widgetSelected(SelectionEvent e) {
+				if (table.getSelectionCount() == 1) {
+					TableItem item = table.getSelection()[0];
+					EventQuey.addEvent(new TaskChangeEvent(
+							EventType.TASK_DELETE, item.getText(0)));
+				}
+			}
+		});
+		mntmDeleteTask.setText("Delete Task");
+
+		MenuItem mntmEvent = new MenuItem(menu, SWT.CASCADE);
+		mntmEvent.setText("Event");
+
+		Menu menu_2 = new Menu(mntmEvent);
+		mntmEvent.setMenu(menu_2);
+
+		MenuItem mntmStartEvent = new MenuItem(menu_2, SWT.NONE);
+		mntmStartEvent.addSelectionListener(new SelectionAdapter() {
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				SelectEvent sev = new SelectEvent(shlTaskSpector,
+						SWT.APPLICATION_MODAL, iniDatas.getEvents());
 				UserEvent event = sev.open();
-				if (event != null){
+				if (event != null) {
 					EventQuey.addEvent(event);
-					EventBlocker blocker = new EventBlocker(shlTaskSpector, SWT.APPLICATION_MODAL, event.getEventName());
+					EventBlocker blocker = new EventBlocker(shlTaskSpector,
+							SWT.APPLICATION_MODAL, event.getEventName());
 					blocker.open();
-					EventQuey.addEvent(new UserEvent(EventType.USER_EVENT_END, event.getEventName()));
+					EventQuey.addEvent(new UserEvent(EventType.USER_EVENT_END,
+							event.getEventName()));
 				}
 			}
 		});
-		btnNewButton_2.setBounds(237, 134, 75, 25);
-		btnNewButton_2.setText("Start Event");
-		
-		Button btnComment = new Button(shlTaskSpector, SWT.NONE);
-		btnComment.addMouseListener(new MouseAdapter() {
+		mntmStartEvent.setText("Start Event");
+
+		MenuItem mntmAddEvent = new MenuItem(menu_2, SWT.NONE);
+		mntmAddEvent.addSelectionListener(new SelectionAdapter() {
 			@Override
-			public void mouseUp(MouseEvent e) {
-				CommentForm c = new CommentForm(new Shell(shlTaskSpector.getDisplay()), SWT.APPLICATION_MODAL);
-				String s = c.open();
-				if (s != null){
-					EventQuey.addEvent(new CommentEvent(s));
+			public void widgetSelected(SelectionEvent e) {
+				AddSimpleDialog eventNameDialog = new AddSimpleDialog(
+						shlTaskSpector, SWT.APPLICATION_MODAL, "New Event",
+						"Event Name");
+				String newEvent = eventNameDialog.open();
+				if (newEvent != null) {
+					Event event = new UserEventAddEvent(newEvent);
+					EventQuey.addEvent(event);
 				}
 			}
 		});
-		btnComment.setBounds(237, 165, 75, 25);
-		btnComment.setText("Comment");
-		
-		Button btnLogAnalyzer = new Button(shlTaskSpector, SWT.NONE);
-		btnLogAnalyzer.addMouseListener(new MouseAdapter() {
+		mntmAddEvent.setText("Add Event");
+
+		MenuItem mntmDeleteEvent = new MenuItem(menu_2, SWT.NONE);
+		mntmDeleteEvent.addSelectionListener(new SelectionAdapter() {
 			@Override
-			public void mouseUp(MouseEvent e) {
-				omega1001.task_spector_analyzer.gui.swt.Mainframe.start(logPath);
-			}
-		});
-		btnLogAnalyzer.setBounds(237, 196, 75, 25);
-		btnLogAnalyzer.setText("Log Analyzer");
-		shlTaskSpector.setTabList(new Control[]{btnNewTask, btnNewButton, btnNewButton_1});
-		btnNewButton_1.addMouseListener(new MouseAdapter() {
-			@Override
-			public void mouseUp(MouseEvent e) {
-				if (table.getSelectionCount() == 1){
-					TableItem item = table.getSelection()[0];
-					EventQuey.addEvent(new TaskChangeEvent(EventType.TASK_STOP, item.getText(0)));
+			public void widgetSelected(SelectionEvent e) {
+				SelectEvent sev = new SelectEvent(shlTaskSpector,
+						SWT.APPLICATION_MODAL, iniDatas.getEvents());
+				UserEvent event = sev.open();
+				if (event != null && event.getEventName() != null) {
+					String eventName = event.getEventName();
+					EventQuey.addEvent(new UserEvent(EventType.USER_EVENT_DEL,
+							eventName));
 				}
 			}
 		});
+		mntmDeleteEvent.setText("Delete Event");
 		
+		MenuItem mntmLogAnalyzer = new MenuItem(menu, SWT.NONE);
+		mntmLogAnalyzer.addSelectionListener(new SelectionAdapter() {
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				omega1001.task_spector_analyzer.gui.swt.Mainframe
+				.start(logPath);
+			}
+		});
+		mntmLogAnalyzer.setText("Log Analyzer");
+
 		update();
-		
 
 	}
-	
-	private void update (){
-		if (!core.isUpdate()){
+
+	private void update() {
+		if (!core.isUpdate()) {
 			return;
 		}
 		table.removeAll();
-		List<Task> tasks = core.getTasks();		
-		for (Task t : tasks){
+		List<Task> tasks = core.getTasks();
+		for (Task t : tasks) {
 			TableItem ti = new TableItem(table, SWT.NONE);
-			ti.setText(0,t.getName());
-			ti.setText(1,(t.isActiv() ? "Active":"Inactive"));
+			ti.setText(0, t.getName());
+			ti.setText(1, (t.isActiv() ? "Active" : "Inactive"));
 		}
 	}
-	
-	private void dispose(){
+
+	private void dispose() {
 		core.shutdown();
 		shlTaskSpector.dispose();
 	}

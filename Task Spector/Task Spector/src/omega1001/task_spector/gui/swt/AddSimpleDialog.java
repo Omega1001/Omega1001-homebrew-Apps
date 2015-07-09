@@ -1,7 +1,5 @@
 package omega1001.task_spector.gui.swt;
 
-import omega1001.task_spector.moddel.Task;
-
 import org.eclipse.swt.widgets.Dialog;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Shell;
@@ -12,31 +10,31 @@ import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.events.MouseAdapter;
 import org.eclipse.swt.events.MouseEvent;
 import org.eclipse.swt.widgets.Control;
-import org.eclipse.swt.events.KeyAdapter;
-import org.eclipse.swt.events.KeyEvent;
 import org.eclipse.core.databinding.DataBindingContext;
 
-public class NewTaskDialog extends Dialog {
+public class AddSimpleDialog extends Dialog {
 
-	protected Task result;
+	protected String result;
 	protected Shell shell;
 	private Text text;
+	private String caption;
 
 	/**
 	 * Create the dialog.
 	 * @param parent
 	 * @param style
 	 */
-	public NewTaskDialog(Shell parent, int style) {
+	public AddSimpleDialog(Shell parent, int style, String title, String caption) {
 		super(parent, style);
-		setText("New Task");
+		setText(title);
+		this.caption = caption;
 	}
 
 	/**
 	 * Open the dialog.
 	 * @return the result
 	 */
-	public Task open() {
+	public String open() {
 		createContents();
 		shell.open();
 		shell.layout();
@@ -55,30 +53,20 @@ public class NewTaskDialog extends Dialog {
 	private void createContents() {
 		shell = new Shell(getParent(), getStyle());
 		shell.setSize(178, 118);
-		shell.setText(getText());
 		
 		Label lblTaskName = new Label(shell, SWT.NONE);
 		lblTaskName.setBounds(10, 10, 89, 15);
-		lblTaskName.setText("Task Name");
+		lblTaskName.setText(caption);
 		
 		text = new Text(shell, SWT.BORDER);
 		text.setBounds(10, 31, 156, 21);
 		
 		Button btnNewButton = new Button(shell, SWT.NONE);
-		btnNewButton.addKeyListener(new KeyAdapter() {
-			@Override
-			public void keyPressed(KeyEvent e) {
-				if (e.keyCode == SWT.CR || e.keyCode == SWT.KEYPAD_CR){
-					result = new Task(text.getText());
-					shell.dispose();
-				}
-			}
-		});
 		btnNewButton.addMouseListener(new MouseAdapter() {
 			@Override
 			public void mouseUp(MouseEvent e) {
 				if (text.getText() != null && !text.getText().equals(""))
-					result = new Task(text.getText());
+					result = text.getText();
 				else
 					result = null;
 				shell.dispose();
